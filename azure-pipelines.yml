@@ -6,49 +6,141 @@ pr:
   - master
   - rel/*
 
-pool:
-  vmImage: windows-2019
+jobs:
+- job: Windows
+  pool:
+    vmImage: windows-2019
 
-variables:
-  BuildConfiguration: Release
+  variables:
+    BuildConfiguration: Release
 
-steps:
-- task: DotNetCoreCLI@2  
-  inputs:
-    command: custom
-    custom: tool
-    arguments: install --tool-path . nbgv
-  displayName: Install NBGV tool
+  steps:
+  - task: DotNetCoreCLI@2  
+    inputs:
+      command: custom
+      custom: tool
+      arguments: install --tool-path . nbgv
+    displayName: Install NBGV tool
 
-- script: nbgv cloud
-  displayName: Set Version
+  - script: nbgv cloud
+    displayName: Set Version
 
-- powershell: |
-    mkdir $Env:Temp\Packages -Force
-  displayName: Build
+  - powershell: |
+      mkdir $Env:Temp\Packages -Force
+    displayName: Create packages temp folder
 
-- task: DotNetCoreCLI@2
-  inputs:
-    command: pack
-    packagesToPack: Source/MSBuild.Sdk.Extras/MSBuild.Sdk.Extras.csproj
-    configuration: $(BuildConfiguration)
-    packDirectory: $(Build.ArtifactStagingDirectory)\Packages    
-    verbosityPack: Minimal
-  displayName: Build Package
+  - task: DotNetCoreCLI@2
+    inputs:
+      command: pack
+      packagesToPack: Source/MSBuild.Sdk.Extras/MSBuild.Sdk.Extras.csproj
+      configuration: $(BuildConfiguration)
+      packDirectory: $(Build.ArtifactStagingDirectory)\Packages    
+      verbosityPack: Minimal
+    displayName: Build Package
 
-- task: PowerShell@2
-  displayName: Authenticode Sign artifacts
-  inputs:
-    filePath: Tools\Sign-Package.ps1
-  env:
-    SignClientUser: $(SignClientUser)
-    SignClientSecret: $(SignClientSecret)
-    ArtifactDirectory: $(Build.ArtifactStagingDirectory)\Packages
-  condition: and(succeeded(), not(eq(variables['build.reason'], 'PullRequest')), not(eq(variables['SignClientSecret'], '')), not(eq(variables['SignClientUser'], '')))
+  - task: PowerShell@2
+    displayName: Authenticode Sign artifacts
+    inputs:
+      filePath: Tools\Sign-Package.ps1
+    env:
+      SignClientUser: $(SignClientUser)
+      SignClientSecret: $(SignClientSecret)
+      ArtifactDirectory: $(Build.ArtifactStagingDirectory)\Packages
+    condition: and(succeeded(), not(eq(variables['build.reason'], 'PullRequest')), not(eq(variables['SignClientSecret'], '')), not(eq(variables['SignClientUser'], '')))
 
-- task: PublishBuildArtifacts@1
-  displayName: Publish Artifacts  
-  inputs:
-    pathToPublish: $(Build.ArtifactStagingDirectory)\Packages
-    artifactType: container
-    artifactName: Package
+  - task: PublishBuildArtifacts@1
+    displayName: Publish Artifacts  
+    inputs:
+      pathToPublish: $(Build.ArtifactStagingDirectory)\Packages
+      artifactType: container
+      artifactName: Package
+
+
+- job: Linux
+  pool:
+    vmImage: 'ubuntu-16.04'
+
+  variables:
+    BuildConfiguration: Release
+    TMPDIR: /tmp
+    DisableNerdBank: true
+    PackageVersion: 42.42.42
+
+  steps:
+  - task: DotNetCoreCLI@2  
+    inputs:
+      command: custom
+      custom: tool
+      arguments: install --tool-path $(HOME) nbgv
+    displayName: Install NBGV tool
+
+  - script: ~/nbgv cloud
+    displayName: Set Version
+
+  - script: |
+      mkdir $TMPDIR/Packages
+    displayName: Create packages temp folder
+
+  - task: DotNetCoreCLI@2
+    inputs:
+      command: pack
+      packagesToPack: Source/MSBuild.Sdk.Extras/MSBuild.Sdk.Extras.csproj
+      configuration: $(BuildConfiguration)
+      packDirectory: $(TMPDIR)/Packages    
+      verbosityPack: Minimal
+    displayName: Build Package
+
+
+  - task: DotNetCoreCLI@2
+    inputs:
+      command: build
+      projects: 'TestProjects/Linux-C#/netstd2Library/netstd2Library.csproj'
+      configuration: $(BuildConfiguration)
+      buildProperties: TargetFramework=netstandard2.0
+      verbosityPack: Minimal
+    displayName: .NET Std Library test
+
+
+- job: macOS
+  pool:
+    vmImage: 'macOS-10.13'
+
+  variables:
+    BuildConfiguration: Release
+    TMPDIR: /tmp
+    DisableNerdBank: true
+    PackageVersion: 42.42.42
+
+  steps:
+  - task: DotNetCoreCLI@2  
+    inputs:
+      command: custom
+      custom: tool
+      arguments: install --tool-path $(HOME) nbgv
+    displayName: Install NBGV tool
+
+  - script: ~/nbgv cloud
+    displayName: Set Version
+
+  - script: |
+      mkdir $TMPDIR/Packages
+    displayName: Create packages temp folder
+
+  - task: DotNetCoreCLI@2
+    inputs:
+      command: pack
+      packagesToPack: Source/MSBuild.Sdk.Extras/MSBuild.Sdk.Extras.csproj
+      configuration: $(BuildConfiguration)
+      packDirectory: $(TMPDIR)/Packages    
+      verbosityPack: Minimal
+    displayName: Build Package
+
+
+  - task: DotNetCoreCLI@2
+    inputs:
+      command: build
+      projects: 'TestProjects/Linux-C#/netstd2Library/netstd2Library.csproj'
+      configuration: $(BuildConfiguration)
+      buildProperties: TargetFramework=netstandard2.0
+      verbosityPack: Minimal
+    displayName: .NET Std Library test
