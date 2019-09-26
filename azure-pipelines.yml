@@ -102,6 +102,14 @@ jobs:
 
 
 - job: macOS
+
+  strategy:
+    matrix:
+      Xamarin_5_16_0:
+        XamarinVersion: 5_16_0
+      Xamarin_5_12_0:
+        XamarinVersion: 5_12_0
+
   pool:
     vmImage: 'macOS-10.13'
 
