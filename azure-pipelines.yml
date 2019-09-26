@@ -68,16 +68,6 @@ jobs:
     PackageVersion: 42.42.42
 
   steps:
-  - task: DotNetCoreCLI@2  
-    inputs:
-      command: custom
-      custom: tool
-      arguments: install --tool-path $(HOME) nbgv
-    displayName: Install NBGV tool
-
-  - script: ~/nbgv cloud
-    displayName: Set Version
-
   - script: |
       mkdir $TMPDIR/Packages
     displayName: Create packages temp folder
@@ -99,7 +89,7 @@ jobs:
       configuration: $(BuildConfiguration)
       buildProperties: TargetFramework=netstandard2.0
       verbosityPack: Minimal
-    displayName: .NET Std Library test
+    displayName: .NET Std Library with unavailable platform test
 
 
 - job: macOS
@@ -139,4 +129,4 @@ jobs:
     displayName: Build Package
 
   - bash: 'msbuild /r /p:Configuration=Release TestProjects/Linux-C#/netstd2Library/netstd2Library.csproj' # /bl:$(build.artifactstagingdirectory)/macos-build.binlog
-    displayName: .NET Std Library test
+    displayName: .NET Std Library with unavailable platform test
