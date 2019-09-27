@@ -79,13 +79,19 @@ jobs:
       verbosityPack: Minimal
     displayName: Build Package
 
-  - powershell: |
-      dotnet build --configuration Release $(build.sourcesdirectory)\TestProjects\Linux-C#\netstd2Library\netstd2Library.csproj
-      msbuild /r /p:Configuration=Release $(build.sourcesdirectory)\TestProjects\Linux-C#\netstd2Library\netstd2Library.csproj
-      dotnet build --configuration Release $(build.sourcesdirectory)\TestProjects\Windows-Desktop-C#\Windows-Desktop.csproj
-      msbuild /r /p:Configuration=Release $(build.sourcesdirectory)\TestProjects\Windows-Desktop-C#\Windows-Desktop.csproj
+  - task: MSBuild@1
+    inputs:
+      solution: '$(build.sourcesdirectory)\TestProjects\Windows-Desktop-C#\Windows-Desktop.sln'
+      msbuildArguments: /r
+      configution: $(BuildConfiguration)
+    displayName: MSBuild Test Projects 1
 
-    displayName: Build Test Projects
+  - task: MSBuild@1
+    inputs:
+      solution: '$(build.sourcesdirectory)\TestProjects\Linux-C#\netstd2Library\netstd2Library.csproj'
+      msbuildArguments: /r
+      configution: $(BuildConfiguration)
+    displayName: MSBuild Test Projects 2
 
 - job: Linux
   container: nventive/wasm-build:1.4.1
