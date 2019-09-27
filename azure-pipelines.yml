@@ -82,7 +82,7 @@ jobs:
   - task: MSBuild@1
     inputs:
       solution: '$(build.sourcesdirectory)\TestProjects\Windows-Desktop-C#\Windows-Desktop.sln'
-      msbuildArguments: /r
+      msbuildArguments: /r /p:SignManifests=false
       configution: $(BuildConfiguration)
     displayName: MSBuild Test Projects 1
 
