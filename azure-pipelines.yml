@@ -62,6 +62,8 @@ jobs:
   variables:
     BuildConfiguration: Release
     TMPDIR: $(Build.ArtifactStagingDirectory)
+    DisableNerdBank: true
+    PackageVersion: 42.42.42
 
   steps:
   - powershell: |
